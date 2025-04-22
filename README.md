@@ -12,7 +12,14 @@
 python main.py --n_player 6 --player_names Player_1 Player_2 Player_3 Player_4 Player_5 Player_6 --n_select 3 --exclude_list 炼金术士 仙女
 ```
 
+使用[MakeFile](makefile):
+
 按照需要更新[makefile](makefile)中的玩家人数，名称，可选择法师数，以及排除法师列表之后，在此路径下运行```make```。
+
+运行以下指令来避免同步makefile:
+```
+git update-index --assume-unchanged makefile
+```
 
 ## 规则补充
 - 职业 > 牌面 > 技能

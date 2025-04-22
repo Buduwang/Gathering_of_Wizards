@@ -129,7 +129,7 @@ if __name__=='__main__':
     wizard_dict = load_wizards()
     rule1 = "-"*100
     
-    with open('doc/现有法师列表.txt', 'w') as file:
+    with open('doc/现有法师列表.txt', 'w', encoding="utf-8") as file:
         # Print to the file
         print("现有法师列表(共%i个): \n"%(len(wizard_dict)), file=file)
         for wizard_name, power_dict in wizard_dict.items():
