@@ -5,12 +5,26 @@ import random
 
 """
 A visual role selection system using a GUI. 
-Step 1 allows the user to select the number of players (1–6); 
-Step 2 collects player names; 
-Step 3 presents each player with 3 randomly assigned role cards. Players can click on any card to select their desired 
-role, and the selected card will be highlighted in green. Due to UI layout and card content length, each skill 
-description is limited to 40 characters. If the full description is not visible, hover over the skill box to view 
-the full text. After all players have selected their roles, click the "Finish Selection" button in the top-right corner to proceed.
+
+Step 1 Allows the user to select the number of players (1–6); 
+
+Step 2 Collects player names; 
+
+Step 3 Presents each player with 3 randomly assigned role cards. Players can click on any card to select their desired role, 
+and the selected card will be highlighted in green. 
+
+Step 4 After all players have selected their roles, click the "Finish Selection" button in the top-right corner to proceed.
+
+Step 5 In the final selection screen, clicking "re-randomize" will return to the role cards selection interface, 
+removing previously chosen role cards from the pool and allowing players to start a new round of selection. 
+If "GG" (I'm done) is clicked instead, the entire selection system will be closed.
+
+！！！Due to UI layout and card content length, each skill description is limited to 40 characters. If the full description 
+is not visible, hover over the skill box to view the full text. ！！！
+
+Upcoming updates：
+-Selection result UI update
+-Return to the previous window while retaining the character culling pool？
 """
 
 # Setup window
@@ -71,27 +85,21 @@ class WizardSelectorGUI:
     def __init__(self, master, player_names, wizard_dict, n_select=3):
         self.master = master
         self.master.title("职业选择")
+        # Initial size of the window
         self.master.geometry("1500x800")
-
-        # use icon
+        # Selects icon for tkinter
         icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__),  'doc', 'icon.ico'))
         self.master.iconbitmap(icon_path)
-
         self.player_names = player_names
         self.wizard_dict = wizard_dict
         self.n_select = n_select
         self.selected_wizards = {name: None for name in player_names}
         self.wizard_options = {}
         self.card_frames = {}
-
         self.available_wizards = list(wizard_dict.items())
         random.shuffle(self.available_wizards)
-
         self.font_main = ("Microsoft YaHei", 11)
-
         self.build_scrollable_ui()
-
-
 
     def build_scrollable_ui(self):
         self.canvas = tk.Canvas(self.master, borderwidth=0)
@@ -116,17 +124,13 @@ class WizardSelectorGUI:
         # Maximum number of rows - fit UI
         max_rows = 3
         used_wizards = set()
-
         for i, player in enumerate(self.player_names):
             row = i % max_rows
             col = i // max_rows
-
             player_frame = tk.Frame(container, relief=tk.FLAT, borderwidth=1)
             player_frame.grid(row=row, column=col, padx=10, pady=10, sticky='n')
-
             label = tk.Label(player_frame, text=f"{player}，请选择你的职业：", font=("Microsoft YaHei", 11, "bold"), fg="red")
             label.pack(anchor="w")
-
             card_row = tk.Frame(player_frame)
             card_row.pack()
 
@@ -191,6 +195,32 @@ class WizardSelectorGUI:
             return
         self.show_summary_window()
 
+    def clear_main_ui(self):
+        if hasattr(self, 'canvas'):
+            self.canvas.destroy()
+        if hasattr(self, 'scrollbar'):
+            self.scrollbar.destroy()
+        if hasattr(self, 'finish_btn'):
+            self.finish_btn.destroy()
+
+    def restart_selection(self, summary_window):
+        summary_window.destroy()
+        # Removed played roles from last round
+        used = set(self.selected_wizards.values())
+        self.available_wizards = [(k, v) for k, v in self.wizard_dict.items() if k not in used]
+        # Check if enough is allocated
+        total_needed = len(self.player_names) * self.n_select
+        if len(self.available_wizards) < total_needed:
+            messagebox.showwarning("卡池不足", "剩余角色不足以分配给所有玩家。")
+            return
+        # Rebuild role selector UI
+        self.selected_wizards = {name: None for name in self.player_names}
+        self.wizard_options.clear()
+        self.card_frames.clear()
+
+        self.clear_main_ui()
+        self.build_scrollable_ui()
+
     def show_summary_window(self):
         summary = tk.Toplevel(self.master)
         summary.title("最终选择展示")
@@ -201,8 +231,12 @@ class WizardSelectorGUI:
             for skill, desc in self.wizard_dict[self.selected_wizards[player]].items():
                 tk.Label(summary, text=f"  {skill}: {desc}", wraplength=650, justify="left", font=self.font_main).pack(anchor="w", padx=20)
 
-        tk.Button(summary, text="GG", command=summary.destroy).pack(pady=10)
+        btn_frame = tk.Frame(summary)
+        btn_frame.pack(pady=10)
 
+        tk.Button(btn_frame, text="重新随机", font=self.font_main,
+                  command=lambda: self.restart_selection(summary)).pack(padx=10)
+        tk.Button(btn_frame, text="不想玩辣", font=self.font_main, command=self.master.quit).pack(padx=10)
 
 
 
