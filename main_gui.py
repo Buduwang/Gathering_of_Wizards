@@ -34,7 +34,7 @@ class PlayerSetupGUI:
         self.master.title("玩家设置")
         self.wizard_dict = wizard_dict
         self.font_main = ("Microsoft YaHei", 11)
-        self.master.geometry("400x300")
+        self.master.geometry("600x300")
         self.player_entries = []
         self.num_players = 0
 
@@ -98,29 +98,80 @@ class WizardSelectorGUI:
         self.card_frames = {}
         self.available_wizards = list(wizard_dict.items())
         random.shuffle(self.available_wizards)
-        self.font_main = ("Microsoft YaHei", 11)
+        self.font_main = ("Microsoft YaHei", 11)    
+        
+        self.screen_w = self.master.winfo_screenwidth()
+        self.screen_h = self.master.winfo_screenheight()
+        
+        
         self.build_scrollable_ui()
 
+    # def build_scrollable_ui(self):
+    #     self.canvas = tk.Canvas(self.master, borderwidth=0)
+    #     self.scroll_frame = tk.Frame(self.canvas)
+    #     self.scrollbar = tk.Scrollbar(self.master, orient="vertical", command=self.canvas.yview)
+    #     self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+    #     self.scrollbar.pack(side="right", fill="y")
+    #     self.canvas.pack(side="left", fill="both", expand=True)
+    #     self.canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
+
+    #     self.scroll_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+    #     self.canvas.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+
+    #     self.build_cards(self.scroll_frame)
+
+    #     self.finish_btn = tk.Button(self.master, text="完成选择", command=self.finish_selection)
+    #     self.finish_btn.pack(pady=10)
+
     def build_scrollable_ui(self):
-        self.canvas = tk.Canvas(self.master, borderwidth=0)
-        self.scroll_frame = tk.Frame(self.canvas)
-        self.scrollbar = tk.Scrollbar(self.master, orient="vertical", command=self.canvas.yview)
+        
+        # Wrapper frame for layout (canvas + button)
+        wrapper = tk.Frame(self.master)
+        wrapper.pack(fill="both", expand=True)
+        
+        # Pack finish button *outside* the scrollable wrapper
+        self.finish_btn = tk.Button(self.master, text="完成选择", command=self.finish_selection)
+        self.finish_btn.pack(pady=10) 
+
+        # Canvas and scrollbar
+        self.canvas = tk.Canvas(wrapper, borderwidth=0)
+        self.scrollbar = tk.Scrollbar(wrapper, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Scrollable frame inside canvas
+        self.scroll_frame = tk.Frame(self.canvas)
         self.canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
 
-        self.scroll_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        self.canvas.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+        # Update scrollregion when contents change
+        self.scroll_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
 
+        # Scroll with mouse wheel
+        self.canvas.bind_all(
+            "<MouseWheel>",
+            lambda e: self.canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
+        )
+
+        # Build content in scrollable frame
         self.build_cards(self.scroll_frame)
 
-        self.finish_btn = tk.Button(self.master, text="完成选择", command=self.finish_selection)
-        self.finish_btn.pack(pady=10)
-
-
     def build_cards(self, container):
+        
+        # screen_w = self.master.winfo_screenwidth()
+        # screen_h = self.master.winfo_screenheight()
+        # print(screen_w, screen_h)
+        card_width = (self.screen_w-56) / 6
+        card_height = (self.screen_h-140) / 3  # in pixels
+        
+        wrap_max = card_width - 10
+        max_text_length = 10000
+
         # Maximum number of rows - fit UI
         max_rows = 3
         used_wizards = set()
@@ -128,7 +179,7 @@ class WizardSelectorGUI:
             row = i % max_rows
             col = i // max_rows
             player_frame = tk.Frame(container, relief=tk.FLAT, borderwidth=1)
-            player_frame.grid(row=row, column=col, padx=10, pady=10, sticky='n')
+            player_frame.grid(row=row, column=col, padx=3, pady=1, sticky='n')
             label = tk.Label(player_frame, text=f"{player}，请选择你的职业：", font=("Microsoft YaHei", 11, "bold"), fg="red")
             label.pack(anchor="w")
             card_row = tk.Frame(player_frame)
@@ -145,21 +196,33 @@ class WizardSelectorGUI:
             self.card_frames[player] = []
 
             for wiz_name, skills in options:
-                f = tk.Frame(card_row, relief=tk.RIDGE, borderwidth=2, bg="white")
-                f.pack(side="left", padx=5, pady=5)
+                
+                # =====================================
+                # flexible card size
+                # f = tk.Frame(card_row, relief=tk.RIDGE, borderwidth=2, bg="white")
+
+                # =====================================
+                # determined card size
+                f = tk.Frame(card_row, relief=tk.RIDGE, borderwidth=2, bg="white", 
+                             width=card_width, height=card_height)
+                f.pack_propagate(False)  # Prevent resizing to fit contents
+                
+                # ==========================================================
+                f.pack(side="left", padx=2, pady=2)
                 f.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
 
                 name_label = tk.Label(f, text=wiz_name, font=("Microsoft YaHei", 11, "bold"), fg="blue", bg="white")
-                name_label.pack(pady=2)
+                name_label.pack(pady=0)
                 name_label.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
 
                 for skill, desc in skills.items():
                     skill_label = tk.Label(f, text=skill, font=("Microsoft YaHei", 10, "bold"), fg="darkblue", bg="white", anchor="w", justify="left")
-                    skill_label.pack(anchor="w", padx=5)
+                    skill_label.pack(anchor="w", padx=2, pady=0)
                     skill_label.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
 
-                    desc_label = tk.Label(f, text=desc[:40] + ('...' if len(desc) > 40 else ''), font=self.font_main, wraplength=180, justify="left", bg="white")
-                    desc_label.pack(anchor="w", padx=10)
+                    desc_label = tk.Label(f, text=desc[:max_text_length] + ('...' if len(desc) > max_text_length else ''), 
+                                          font=self.font_main, wraplength=wrap_max, justify="left", bg="white")
+                    desc_label.pack(anchor="w", padx=2)
                     desc_label.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
                     desc_label.bind("<Enter>", lambda e, full=desc: self.show_tooltip(e.widget, full))
                     desc_label.bind("<Leave>", lambda e: self.hide_tooltip())
@@ -202,6 +265,8 @@ class WizardSelectorGUI:
             self.scrollbar.destroy()
         if hasattr(self, 'finish_btn'):
             self.finish_btn.destroy()
+        for widget in self.master.winfo_children():
+            widget.destroy()
 
     def restart_selection(self, summary_window):
         summary_window.destroy()
@@ -224,12 +289,15 @@ class WizardSelectorGUI:
     def show_summary_window(self):
         summary = tk.Toplevel(self.master)
         summary.title("最终选择展示")
-        summary.geometry("700x700")
+        summary.geometry("%ix%i"%(self.screen_w, self.screen_h))
 
         for i, player in enumerate(self.player_names):
-            tk.Label(summary, text=f"{player} 选择了 {self.selected_wizards[player]}", font=("Microsoft YaHei", 12, "bold"), fg="blue").pack(anchor="w", pady=5)
+            tk.Label(summary, text=f"{player} 选择了 {self.selected_wizards[player]}", 
+                     font=("Microsoft YaHei", 22, "bold"), fg="blue").pack(anchor="w", padx=20,pady=10)
             for skill, desc in self.wizard_dict[self.selected_wizards[player]].items():
-                tk.Label(summary, text=f"  {skill}: {desc}", wraplength=650, justify="left", font=self.font_main).pack(anchor="w", padx=20)
+                tk.Label(summary, text=f"  {skill}: {desc}", 
+                         wraplength=self.screen_w-50, justify="left", 
+                         font=("Microsoft YaHei", 18, "bold")).pack(anchor="w", padx=20)
 
         btn_frame = tk.Frame(summary)
         btn_frame.pack(pady=10)
@@ -237,8 +305,6 @@ class WizardSelectorGUI:
         tk.Button(btn_frame, text="重新随机", font=self.font_main,
                   command=lambda: self.restart_selection(summary)).pack(padx=10)
         tk.Button(btn_frame, text="不想玩辣", font=self.font_main, command=self.master.quit).pack(padx=10)
-
-
 
 if __name__ == '__main__':
     from src.wizards import load_wizards
