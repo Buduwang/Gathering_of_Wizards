@@ -43,7 +43,7 @@ class PlayerSetupGUI:
     def build_step1(self):
         self.clear_window()
 
-        tk.Label(self.master, text="请选择玩家人数（最多六名）：", font=("Microsoft YaHei", 12, "bold"), fg="red").pack(pady=20,anchor='center')
+        tk.Label(self.master, text="请选择玩家人数（最多六名）：", font=("Microsoft YaHei", self.font_main[1]+1, "bold"), fg="red").pack(pady=20,anchor='center')
 
         btn_frame = tk.Frame(self.master)
         btn_frame.pack()
@@ -98,7 +98,7 @@ class WizardSelectorGUI:
         self.card_frames = {}
         self.available_wizards = list(wizard_dict.items())
         random.shuffle(self.available_wizards)
-        self.font_main = ("Microsoft YaHei", 11)    
+        self.font_main = ("Microsoft YaHei", 15)    
         
         self.screen_w = self.master.winfo_screenwidth()
         self.screen_h = self.master.winfo_screenheight()
@@ -180,7 +180,7 @@ class WizardSelectorGUI:
             col = i // max_rows
             player_frame = tk.Frame(container, relief=tk.FLAT, borderwidth=1)
             player_frame.grid(row=row, column=col, padx=3, pady=1, sticky='n')
-            label = tk.Label(player_frame, text=f"{player}，请选择你的职业：", font=("Microsoft YaHei", 11, "bold"), fg="red")
+            label = tk.Label(player_frame, text=f"{player}，请选择你的职业：", font=("Microsoft YaHei", self.font_main[1], "bold"), fg="red")
             label.pack(anchor="w")
             card_row = tk.Frame(player_frame)
             card_row.pack()
@@ -211,12 +211,12 @@ class WizardSelectorGUI:
                 f.pack(side="left", padx=2, pady=2)
                 f.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
 
-                name_label = tk.Label(f, text=wiz_name, font=("Microsoft YaHei", 11, "bold"), fg="blue", bg="white")
+                name_label = tk.Label(f, text=wiz_name, font=("Microsoft YaHei", self.font_main[1], "bold"), fg="blue", bg="white")
                 name_label.pack(pady=0)
                 name_label.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
 
                 for skill, desc in skills.items():
-                    skill_label = tk.Label(f, text=skill, font=("Microsoft YaHei", 10, "bold"), fg="darkblue", bg="white", anchor="w", justify="left")
+                    skill_label = tk.Label(f, text=skill, font=("Microsoft YaHei", self.font_main[1]-1, "bold"), fg="darkblue", bg="white", anchor="w", justify="left")
                     skill_label.pack(anchor="w", padx=2, pady=0)
                     skill_label.bind("<Button-1>", lambda e, p=player, w=wiz_name: self.select_wizard(p, w))
 
@@ -293,11 +293,11 @@ class WizardSelectorGUI:
 
         for i, player in enumerate(self.player_names):
             tk.Label(summary, text=f"{player} 选择了 {self.selected_wizards[player]}", 
-                     font=("Microsoft YaHei", 22, "bold"), fg="blue").pack(anchor="w", padx=20,pady=10)
+                     font=("Microsoft YaHei", self.font_main[1]+10, "bold"), fg="blue").pack(anchor="w", padx=20,pady=10)
             for skill, desc in self.wizard_dict[self.selected_wizards[player]].items():
                 tk.Label(summary, text=f"  {skill}: {desc}", 
                          wraplength=self.screen_w-50, justify="left", 
-                         font=("Microsoft YaHei", 18, "bold")).pack(anchor="w", padx=20)
+                         font=("Microsoft YaHei", self.font_main[1]+7, "bold")).pack(anchor="w", padx=20)
 
         btn_frame = tk.Frame(summary)
         btn_frame.pack(pady=10)
