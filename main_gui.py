@@ -94,11 +94,12 @@ class WizardSelectorGUI:
         self.wizard_dict = wizard_dict
         self.n_select = n_select
         self.selected_wizards = {name: None for name in player_names}
+        self.game_used = set()
         self.wizard_options = {}
         self.card_frames = {}
         self.available_wizards = list(wizard_dict.items())
         random.shuffle(self.available_wizards)
-        self.font_main = ("Microsoft YaHei", 15)    
+        self.font_main = ("Microsoft YaHei", 11)    
         
         self.screen_w = self.master.winfo_screenwidth()
         self.screen_h = self.master.winfo_screenheight()
@@ -174,7 +175,7 @@ class WizardSelectorGUI:
 
         # Maximum number of rows - fit UI
         max_rows = 3
-        used_wizards = set()
+        used_wizards_now = set()
         for i, player in enumerate(self.player_names):
             row = i % max_rows
             col = i // max_rows
@@ -185,12 +186,13 @@ class WizardSelectorGUI:
             card_row = tk.Frame(player_frame)
             card_row.pack()
 
+            # print(len(self.available_wizards), len(used_wizards_now))
             options = []
             while len(options) < self.n_select and self.available_wizards:
                 wiz = self.available_wizards.pop()
-                if wiz[0] not in used_wizards:
+                if wiz[0] not in used_wizards_now:
                     options.append(wiz)
-                    used_wizards.add(wiz[0])
+                    used_wizards_now.add(wiz[0])
 
             self.wizard_options[player] = options
             self.card_frames[player] = []
@@ -228,7 +230,6 @@ class WizardSelectorGUI:
                     desc_label.bind("<Leave>", lambda e: self.hide_tooltip())
 
                 self.card_frames[player].append((wiz_name, f))
-
 
     def show_tooltip(self, widget, text):
         x, y, _, _ = widget.bbox("insert")
@@ -270,14 +271,22 @@ class WizardSelectorGUI:
 
     def restart_selection(self, summary_window):
         summary_window.destroy()
-        # Removed played roles from last round
+        
+        # Removed played roles 
         used = set(self.selected_wizards.values())
-        self.available_wizards = [(k, v) for k, v in self.wizard_dict.items() if k not in used]
+        self.game_used.update(used)
+        print(self.game_used)
+        
+        # print(len(self.available_wizards))
+        self.available_wizards = [(k, v) for k, v in self.wizard_dict.items() if k not in self.game_used]
+        print(len(self.available_wizards))
+        
         # Check if enough is allocated
         total_needed = len(self.player_names) * self.n_select
         if len(self.available_wizards) < total_needed:
-            messagebox.showwarning("卡池不足", "剩余角色不足以分配给所有玩家。")
-            return
+            messagebox.showwarning("卡池不足", "剩余角色不足以分配给所有玩家，将重新洗牌。")
+            self.available_wizards = self.wizard_dict
+            # return
         # Rebuild role selector UI
         self.selected_wizards = {name: None for name in self.player_names}
         self.wizard_options.clear()
