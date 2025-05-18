@@ -99,7 +99,7 @@ class WizardSelectorGUI:
         self.card_frames = {}
         self.available_wizards = list(wizard_dict.items())
         random.shuffle(self.available_wizards)
-        self.font_main = ("Microsoft YaHei", 11)    
+        self.font_main = ("Microsoft YaHei", 15)    
         
         self.screen_w = self.master.winfo_screenwidth()
         self.screen_h = self.master.winfo_screenheight()
@@ -287,6 +287,8 @@ class WizardSelectorGUI:
             messagebox.showwarning("卡池不足", "剩余角色不足以分配给所有玩家，将重新洗牌。")
             self.available_wizards = self.wizard_dict
             # return
+        
+        random.shuffle(self.available_wizards)
         # Rebuild role selector UI
         self.selected_wizards = {name: None for name in self.player_names}
         self.wizard_options.clear()
