@@ -29,10 +29,11 @@ Upcoming updates：
 
 # Setup window
 class PlayerSetupGUI:
-    def __init__(self, master, wizard_dict):
+    def __init__(self, master, wizard_dict, game_used=None):
         self.master = master
         self.master.title("玩家设置")
         self.wizard_dict = wizard_dict
+        self.game_used = game_used or set()
         self.font_main = ("Microsoft YaHei", 11)
         self.master.geometry("600x300")
         self.player_entries = []
@@ -73,7 +74,7 @@ class PlayerSetupGUI:
         self.master.destroy()
 
         root = tk.Tk()
-        app = WizardSelectorGUI(root, player_names, self.wizard_dict, n_select=3)
+        app = WizardSelectorGUI(root, player_names, self.wizard_dict, n_select=3, game_used=self.game_used)
         root.mainloop()
 
     def clear_window(self):
@@ -82,7 +83,7 @@ class PlayerSetupGUI:
 
 # Character selector
 class WizardSelectorGUI:
-    def __init__(self, master, player_names, wizard_dict, n_select=3):
+    def __init__(self, master, player_names, wizard_dict, n_select=3, game_used=None):
         self.master = master
         self.master.title("职业选择")
         # Initial size of the window
@@ -94,10 +95,10 @@ class WizardSelectorGUI:
         self.wizard_dict = wizard_dict
         self.n_select = n_select
         self.selected_wizards = {name: None for name in player_names}
-        self.game_used = set()
+        self.game_used = set(game_used or [])
         self.wizard_options = {}
         self.card_frames = {}
-        self.available_wizards = list(wizard_dict.items())
+        self.available_wizards = [(k, v) for k, v in wizard_dict.items() if k not in self.game_used]
         random.shuffle(self.available_wizards)
         self.font_main = ("Microsoft YaHei", 15)    
         
@@ -297,6 +298,17 @@ class WizardSelectorGUI:
         self.clear_main_ui()
         self.build_scrollable_ui()
 
+    def return_to_selector(self, summary_window):
+        summary_window.destroy()
+
+    def return_to_player_setup(self, summary_window):
+        summary_window.destroy()
+        self.master.destroy()
+
+        root = tk.Tk()
+        app = PlayerSetupGUI(root, self.wizard_dict, game_used=self.game_used)
+        root.mainloop()
+
     def show_summary_window(self):
         summary = tk.Toplevel(self.master)
         summary.title("最终选择展示")
@@ -315,6 +327,10 @@ class WizardSelectorGUI:
 
         tk.Button(btn_frame, text="重新随机", font=self.font_main,
                   command=lambda: self.restart_selection(summary)).pack(padx=10)
+        tk.Button(btn_frame, text="返回选择", font=self.font_main,
+                  command=lambda: self.return_to_selector(summary)).pack(padx=10)
+        tk.Button(btn_frame, text="返回设置", font=self.font_main,
+                  command=lambda: self.return_to_player_setup(summary)).pack(padx=10)
         tk.Button(btn_frame, text="不想玩辣", font=self.font_main, command=self.master.quit).pack(padx=10)
 
 if __name__ == '__main__':
